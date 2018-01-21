@@ -1,6 +1,6 @@
 '''
 Created on 13.02.2014
-Modified on 01.02.2016
+Modified on 21.01.2018
 Database interface testing for all users related methods.
 
 A Message object is a dictionary which contains the following keys:
@@ -90,11 +90,14 @@ class MessageDBAPITestCase(unittest.TestCase):
         '''
         Populates the database
         '''
-        #This method load the initial values from forum_data_dump.sql
-        ENGINE.populate_tables()
-
-        #Creates a Connection instance to use the API
-        self.connection = ENGINE.connect()
+        try:
+          #This method load the initial values from forum_data_dump.sql
+          ENGINE.populate_tables()
+          #Creates a Connection instance to use the API
+          self.connection = ENGINE.connect()
+        except Exception as e: 
+        #For instance if there is an error while populating the tables
+          ENGINE.clear()
 
     def tearDown(self):
         '''
@@ -106,7 +109,9 @@ class MessageDBAPITestCase(unittest.TestCase):
     def test_messages_table_created(self):
         '''
         Checks that the table initially contains 20 messages (check
-        forum_data_dump.sql). NOTE: Do not use Connection instance but
+        forum_data_dump.sql). 
+        
+        NOTE: Do not use Connection instance but
         call directly SQL.
         '''
         print('('+self.test_messages_table_created.__name__+')', \

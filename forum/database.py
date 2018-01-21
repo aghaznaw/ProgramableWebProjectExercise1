@@ -137,7 +137,7 @@ class Engine(object):
 
         '''
         keys_on = 'PRAGMA foreign_keys = ON'
-        stmnt = 'CREATE TABLE messages(message_id INTEGER PRIMARY KEY AUTOINCREMENT, \
+        stmnt = 'CREATE TABLE messages(message_id INTEGER PRIMARY KEY, \
                     title TEXT, body TEXT, timestamp INTEGER, \
                     ip TEXT, timesviewed INTEGER, \
                     reply_to INTEGER, \
@@ -172,7 +172,7 @@ class Engine(object):
 
         '''
         keys_on = 'PRAGMA foreign_keys = ON'
-        stmnt = 'CREATE TABLE users(user_id INTEGER PRIMARY KEY AUTOINCREMENT,\
+        stmnt = 'CREATE TABLE users(user_id INTEGER PRIMARY KEY,\
                                     nickname TEXT UNIQUE, regDate INTEGER,\
                                     lastLogin INTEGER, timesviewed INTEGER,\
                                     UNIQUE(user_id, nickname))'

@@ -1,6 +1,6 @@
 '''
 Created on 13.02.2014
-Modified on 01.02.2016
+Modified on 21.01.2018
 Database interface testing for all users related methods.
 The user has a data model represented by the following User dictionary:
     {'public_profile': {'registrationdate': ,'nickname': ''
@@ -121,10 +121,15 @@ class UserDBAPITestCase(unittest.TestCase):
         '''
         Populates the database
         '''
-        #This method load the initial values from forum_data_dump.sql
-        ENGINE.populate_tables()
-        #Creates a Connection instance to use the API
-        self.connection = ENGINE.connect()
+        try:
+          #This method load the initial values from forum_data_dump.sql
+          ENGINE.populate_tables()
+          #Creates a Connection instance to use the API
+          self.connection = ENGINE.connect()
+        except Exception as e: 
+        #For instance if there is an error while populating the tables
+          ENGINE.clear()
+
 
     def tearDown(self):
         '''

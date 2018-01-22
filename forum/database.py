@@ -206,12 +206,30 @@ class Engine(object):
         '''
         #TASK3 TODO#
         Write the SQL Statement and neccesary codeto create users_profile table
-        
-        
         '''
-        
-        stmnt = ''
-        return False
+
+        stmnt = 'CREATE TABLE users(user_id INTEGER PRIMARY KEY,\
+                                    firstname TEXT, lastname TEXT,\
+                                    email TEXT, website TEXT,\
+                                    picture TEXT, picture TEXT,\
+                                    mobile TEXT, skype TEXT,\
+                                    age INTEGER,residence TEXT,\
+                                    gender TEXT,signature TEXT,\
+                                   avatar TEXT, UNIQUE(user_id, email))'
+                                   
+        con = sqlite3.connect(self.db_path)
+        with con:
+            #Get the cursor object.
+            #It allows to execute SQL code and traverse the result set
+            cur = con.cursor()
+            try:
+                cur.execute(keys_on)
+                #execute the statement
+                cur.execute(stmnt)
+            except sqlite3.Error as excp:
+                print("Error %s:" % excp.args[0])
+                return False
+        return True
 
     def create_friends_table(self):
         '''
@@ -615,9 +633,9 @@ class Connection(object):
             * test_delete_message_malformed_id
             * test_delete_message_noexisting_id
         '''
-        
+
         return False
-        
+
 
     def modify_message(self, messageid, title, body, editor="Anonymous"):
         '''
@@ -660,7 +678,7 @@ class Connection(object):
                         * test_modify_message_malformed_id
                         * test_modify_message_noexisting_id
         '''
-        
+
         return None
 
     def create_message(self, title, body, sender="Anonymous",
@@ -727,7 +745,7 @@ class Connection(object):
                 * test_append_answer_malformed_id
                 * test_append_answer_noexistingid
         '''
- 
+
         #Create the SQL statment
           #SQL to test that the message which I am answering does exist
         query1 = 'SELECT * from messages WHERE message_id = ?'
@@ -1205,8 +1223,8 @@ class Connection(object):
                 * test_get_user_id
                 * test_get_user_id_unknown_user
         '''
-        
-        
+
+
         return None
 
     def contains_user(self, nickname):

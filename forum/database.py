@@ -211,12 +211,13 @@ class Engine(object):
         stmnt = 'CREATE TABLE users(user_id INTEGER PRIMARY KEY,\
                                     firstname TEXT, lastname TEXT,\
                                     email TEXT, website TEXT,\
-                                    picture TEXT, picture TEXT,\
+                                    picture TEXT,\
                                     mobile TEXT, skype TEXT,\
                                     age INTEGER,residence TEXT,\
                                     gender TEXT,signature TEXT,\
-                                   avatar TEXT, UNIQUE(user_id, email))'
-                                   
+                                    avatar TEXT, UNIQUE(user_id, email, mobile, signature),\
+                                    FOREIGN KEY(user_id ) REFERENCES users(user_id))'
+
         con = sqlite3.connect(self.db_path)
         with con:
             #Get the cursor object.

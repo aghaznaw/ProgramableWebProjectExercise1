@@ -97,7 +97,7 @@ class Engine(object):
         if schema is None:
             schema = DEFAULT_SCHEMA
         try:
-            with open(schema, encoding="utf-8") as f:
+            with open(schema) as f:
                 sql = f.read()
                 cur = con.cursor()
                 cur.executescript(sql)
@@ -120,7 +120,7 @@ class Engine(object):
         #Populate database from dump
         if dump is None:
             dump = DEFAULT_DATA_DUMP
-        with open (dump, encoding="utf-8") as f:
+        with open (dump) as f:
             sql = f.read()
             cur = con.cursor()
             cur.executescript(sql)
@@ -137,7 +137,7 @@ class Engine(object):
 
         '''
         keys_on = 'PRAGMA foreign_keys = ON'
-        stmnt = 'CREATE TABLE messages(message_id INTEGER PRIMARY KEY, \
+        stmnt = 'CREATE TABLE messages(message_id INTEGER PRIMARY KEY AUTOINCREMENT, \
                     title TEXT, body TEXT, timestamp INTEGER, \
                     ip TEXT, timesviewed INTEGER, \
                     reply_to INTEGER, \
@@ -156,8 +156,8 @@ class Engine(object):
                 cur.execute(keys_on)
                 #execute the statement
                 cur.execute(stmnt)
-            except sqlite3.Error as excp:
-                print("Error %s:" % excp.args[0])
+            except sqlite3.Error, excp:
+                print "Error %s:" % excp.args[0]
                 return False
         return True
 
@@ -186,8 +186,8 @@ class Engine(object):
                 cur.execute(keys_on)
                 #execute the statement
                 cur.execute(stmnt)
-            except sqlite3.Error as excp:
-                print("Error %s:" % excp.args[0])
+            except sqlite3.Error, excp:
+                print "Error %s:" % excp.args[0]
                 return False
         return True
 
@@ -203,22 +203,19 @@ class Engine(object):
 
         '''
         keys_on = 'PRAGMA foreign_keys = ON'
+
         '''
         #TASK3 TODO#
         Write the SQL Statement and neccesary codeto create users_profile table
         '''
-
-        stmnt = 'CREATE TABLE users(user_id INTEGER PRIMARY KEY,\
-                                    firstname TEXT, lastname TEXT,\
-                                    email TEXT, website TEXT,\
-                                    picture TEXT,\
-                                    mobile TEXT, skype TEXT,\
-                                    age INTEGER,residence TEXT,\
-                                    gender TEXT,signature TEXT,\
-                                    avatar TEXT, UNIQUE(user_id, email, mobile, signature),\
-                                    FOREIGN KEY(user_id ) REFERENCES users(user_id))'
-
+        stmnt = 'CREATE TABLE users_profile(user_id INTEGER PRIMARY KEY,\
+                                    firstname TEXT, lastname TEXT, email TEXT,\
+                                    website TEXT, picture TEXT, mobile TEXT,\
+                                    skype TEXT, age INTEGER, residence TEXT,\
+                                    gender TEXT, signature TEXT, avatar TEXT,\
+                                    FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE)'
         con = sqlite3.connect(self.db_path)
+
         with con:
             #Get the cursor object.
             #It allows to execute SQL code and traverse the result set
@@ -228,7 +225,7 @@ class Engine(object):
                 #execute the statement
                 cur.execute(stmnt)
             except sqlite3.Error as excp:
-                print("Error %s:" % excp.args[0])
+                print "Error %s:" % excp.args[0]
                 return False
         return True
 
@@ -244,10 +241,8 @@ class Engine(object):
         keys_on = 'PRAGMA foreign_keys = ON'
         stmnt = 'CREATE TABLE friends (user_id INTEGER, friend_id INTEGER, \
                      PRIMARY KEY(user_id, friend_id), \
-                     FOREIGN KEY(user_id) REFERENCES users(user_id) \
-                     ON DELETE CASCADE, \
-                     FOREIGN KEY(friend_id) REFERENCES users(user_id) \
-                     ON DELETE CASCADE)'
+                     FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE, \
+                     FOREIGN KEY(friend_id) REFERENCES users(user_id) ON DELETE CASCADE)'
         #Connects to the database. Gets a connection object
         con = sqlite3.connect(self.db_path)
         with con:
@@ -259,7 +254,7 @@ class Engine(object):
                 #execute the statement
                 cur.execute(stmnt)
             except sqlite3.Error as excp:
-                print("Error %s:" % excp.args[0])
+                print "Error %s:" % excp.args[0]
         return None
 
 
@@ -312,9 +307,9 @@ class Connection(object):
             #We know we retrieve just one record: use fetchone()
             data = cur.fetchone()
             is_activated = data == (1,)
-            print("Foreign Keys status: %s" % 'ON' if is_activated else 'OFF')
-        except sqlite3.Error as excp:
-            print("Error %s:" % excp.args[0])
+            print "Foreign Keys status: %s" % 'ON' if is_activated else 'OFF'
+        except sqlite3.Error, excp:
+            print "Error %s:" % excp.args[0]
             self.close()
             raise excp
         return is_activated
@@ -334,8 +329,8 @@ class Connection(object):
             #execute the pragma command, ON
             cur.execute(keys_on)
             return True
-        except sqlite3.Error as excp:
-            print("Error %s:" % excp.args[0])
+        except sqlite3.Error, excp:
+            print "Error %s:" % excp.args[0]
             return False
 
     def unset_foreign_keys_support(self):
@@ -353,8 +348,8 @@ class Connection(object):
             #execute the pragma command, OFF
             cur.execute(keys_on)
             return True
-        except sqlite3.Error as excp:
-            print("Error %s:" % excp.args[0])
+        except sqlite3.Error, excp:
+            print "Error %s:" % excp.args[0]
             return False
 
     #HELPERS
@@ -635,8 +630,20 @@ class Connection(object):
             * test_delete_message_noexisting_id
         '''
 
-        return False
-
+        query = 'DELETE FROM messages WHERE message_id = ?'
+        #Activate foreign key support
+        self.set_foreign_keys_support()
+        #Cursor and row initialization
+        self.con.row_factory = sqlite3.Row
+        cur = self.con.cursor()
+        #Execute the statement to delete
+        pvalue = (messageid,)
+        cur.execute(query, pvalue)
+        self.con.commit()
+        #Check that it has been deleted
+        if cur.rowcount < 1:
+            return False
+        return True
 
     def modify_message(self, messageid, title, body, editor="Anonymous"):
         '''
@@ -679,8 +686,28 @@ class Connection(object):
                         * test_modify_message_malformed_id
                         * test_modify_message_noexisting_id
         '''
+        
+        self.set_foreign_keys_support()
+        self.con.row_factory = sqlite3.Row
+        cur = self.con.cursor()
+        
+        get_message = 'SELECT * from messages WHERE message_id = ?'
+        p_message = (messageid,)
+        cur.execute(get_message, p_message)
+        rowMessage = cur.fetchone()
+        if not rowMessage:
+            return None
 
-        return None
+        query1 = 'UPDATE messages SET title = ?, body = ?, editor_nickname = ? WHERE message_id = ?'        
+        if editor=='Anonymous':
+            editor = None
+        pvalue = (title, body, editor, messageid)
+        cur.execute(query1, pvalue)
+        self.con.commit()
+        #Check that I have modified the user
+        if cur.rowcount < 1:
+            return None
+        return 'msg-' + str(messageid)
 
     def create_message(self, title, body, sender="Anonymous",
                        ipaddress="0.0.0.0", replyto=None):
@@ -746,51 +773,44 @@ class Connection(object):
                 * test_append_answer_malformed_id
                 * test_append_answer_noexistingid
         '''
-
-        #Create the SQL statment
-          #SQL to test that the message which I am answering does exist
-        query1 = 'SELECT * from messages WHERE message_id = ?'
-          #SQL Statement for getting the user id given a nickname
-        query2 = 'SELECT user_id from users WHERE nickname = ?'
-          #SQL Statement for inserting the data
-        stmnt = 'INSERT INTO messages (title,body,timestamp,ip, \
-                 timesviewed,reply_to,user_nickname,user_id) \
-                 VALUES(?,?,?,?,?,?,?,?)'
-          #Variables for the statement.
-          #user_id is obtained from first statement.
-        user_id = None
-        timestamp = time.mktime(datetime.now().timetuple())
-        #Activate foreign key support
+        
+        query1 = 'INSERT INTO messages (title,body,timestamp,ip,timesviewed, reply_to, user_nickname, user_id) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )'
         self.set_foreign_keys_support()
-        #Cursor and row initialization
         self.con.row_factory = sqlite3.Row
         cur = self.con.cursor()
-        #Provide support for foreign keys
-        #If exists the replyto argument, check that the message exists in
-        #the database table
-        if replyto is not None:
-            pvalue = (replyto,)
-            cur.execute(query1, pvalue)
-            messages = cur.fetchall()
-            if len(messages) < 1:
+        
+        if replyto:
+            get_replyTo_query = 'SELECT * from messages WHERE message_id = ?'
+            p_reply_to = (replyto,)
+            cur.execute(get_replyTo_query, p_reply_to)
+            row = cur.fetchone()
+            if row:
+                replyto = row['message_id']
+            else:
                 return None
-        #Execute SQL Statement to get userid given nickname
-        pvalue = (sender,)
-        cur.execute(query2, pvalue)
-        #Extract user id
-        row = cur.fetchone()
-        if row is not None:
-            user_id = row["user_id"]
-        #Generate the values for SQL statement
-        pvalue = (title, body, timestamp, ipaddress, 0, replyto, sender,
-                  user_id)
-        #Execute the statement
-        cur.execute(stmnt, pvalue)
+        else:
+            replyto = None
+        
+        timesviewed = 0
+        timestamp = time.mktime(datetime.now().timetuple())
+        user_nickname = sender
+        get_user_query = 'SELECT user_id FROM users WHERE nickname=?'
+        puser_nickname = (user_nickname,)
+        cur.execute(get_user_query, puser_nickname)
+        rowUser = cur.fetchone()       
+        
+        if rowUser:
+            user_id = rowUser["user_id"]
+        else:
+            user_id = None
+            
+        pvalue = (title,body,timestamp,ipaddress,timesviewed, replyto, user_nickname, user_id)
+        cur.execute(query1, pvalue)
         self.con.commit()
-        #Extract the id of the added message
-        lid = cur.lastrowid
-        #Return the id in
-        return 'msg-' + str(lid) if lid is not None else None
+        #Check that I have modified the user
+        if cur.rowcount < 1:
+            return None
+        return 'msg-' + str(cur.lastrowid)
 
     def append_answer(self, replyto, title, body, sender="Anonymous",
                       ipaddress="0.0.0.0"):
@@ -1224,12 +1244,27 @@ class Connection(object):
                 * test_get_user_id
                 * test_get_user_id_unknown_user
         '''
+        
+        query = 'SELECT user_id from users WHERE nickname = ?'
+        
+        self.set_foreign_keys_support()
+        
+        self.con.row_factory = sqlite3.Row
+        cur = self.con.cursor()
+        
+        pvalue = (nickname,)
+        cur.execute(query, pvalue)
+        
+        row = cur.fetchone()
+        if row is None:
+            return None
+        user_id = row["user_id"]
 
-
-        return None
+        return user_id
 
     def contains_user(self, nickname):
         '''
         :return: True if the user is in the database. False otherwise
         '''
         return self.get_user_id(nickname) is not None
+        

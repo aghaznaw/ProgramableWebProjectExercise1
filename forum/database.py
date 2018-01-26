@@ -1267,4 +1267,3 @@ class Connection(object):
         :return: True if the user is in the database. False otherwise
         '''
         return self.get_user_id(nickname) is not None
-        
